@@ -38,10 +38,7 @@ ARNetwork::ARNetwork(const std::string& file_name)
 {
 	std::ifstream file(file_name);
 	if (!file.is_open())
-	{
-		std::cout << "Impossible to open " << file_name << "\n";
-		return;
-	}
+		throw Error("Error: couldn't open " + file_name);
 	nlohmann::json data;
 	try { file >> data; }
 	catch (const nlohmann::json::parse_error& e) { std::cout << e.what() << "\n"; }

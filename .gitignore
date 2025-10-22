@@ -1,0 +1,7 @@
+.vscode
+obj
+train
+split
+prediction
+training.csv
+validation.csv

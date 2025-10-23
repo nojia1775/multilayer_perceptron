@@ -55,9 +55,9 @@ ARNetwork	ARNetwork::operator=(const ARNetwork& arn)
 		_a = arn._a;
 		_bias = arn._bias;
 		_learning_rate = arn._learning_rate;
-		_hidden_activation = arn._hidden_activation;
-		_output_activation = arn._output_activation;
-		_loss = arn._loss;
+		_layer_function = arn._layer_function;
+		_output_function = arn._output_function;
+		_loss_function = arn._loss_function;
 	}
 	return *this;
 }
@@ -197,6 +197,33 @@ static void	valid_lists(const std::vector<std::vector<std::vector<double>>>& inp
 	}
 }
 
+void	ARNetwork::process(const batch_type& inputs, const batch_type& outputs, const double& sstot, model_measures_type& track_training, const size_t& epoch, const bool& back)
+{
+	double nbr_vectorial_inputs = 0;
+	for (const auto& batch : inputs)
+		nbr_vectorial_inputs += batch.size();
+	double ssres = 0;
+	double loss_index = 0;
+	auto loss_activation = LossFactory::create(_loss_function);
+	for (size_t j = 0 ; j < inputs.size() ; j++)
+	{
+		std::vector<Matrix<double>> dW(nbr_hidden_layers() + 1);
+		std::vector<Matrix<double>> dZ(nbr_hidden_layers() + 1);
+		for (size_t k = 0 ; k < inputs[j].size() ; k++)
+		{
+			Vector<double> prediction = feed_forward(inputs[j][k], _layer_function, _output_function);
+			loss_index += loss_activation->activate(prediction, outputs[j][k]);
+			for (size_t l = 0 ; l < prediction.dimension() ; l++)
+				ssres += pow(prediction[l] - outputs[j][k][l], 2);
+			if (back)
+				back_propagation(dW, dZ, _loss_function, _layer_function, _output_function, outputs[j][k]);
+		}
+		update_weights_bias(dW, dZ, inputs[j].size());
+	}
+	double r2 = 1.0 - ssres / sstot;
+	track_training[epoch] = {loss_index / nbr_vectorial_inputs, r2};
+}
+
 /**
  * @brief Train the neural network based on a data set
  * 
@@ -209,59 +236,40 @@ static void	valid_lists(const std::vector<std::vector<std::vector<double>>>& inp
  *
  * @return map which contains a loss vector and et r2 vector to evaluate the training of the neural network
  */
-std::map<std::string, std::vector<double>>	ARNetwork::train(const std::string& loss_functions, const std::string& layer_functions, const std::string& output_functions, const std::vector<std::vector<std::vector<double>>>& inputs, const std::vector<std::vector<std::vector<double>>>& outputs, const size_t& epochs)
+std::map<size_t, std::pair<double, double>>	ARNetwork::train(const std::string& loss_functions, const std::string& layer_functions, const std::string& output_functions, const batch_type& inputs, const batch_type& outputs, const size_t& epochs)
 {
 	if (inputs.empty())
 		throw Error("Error: there is no input");
 	if (outputs.empty())
 		throw Error("Error: there is no expected output");
 	double count_outputs = 0;
-	double sum_outputs = 0;
+	double nbr_scalar_outputs = 0;
 	for (const auto& batch : outputs)
 	{
 		for (const auto& sample : batch)
 		{
 			for (const auto& coef : sample)
 			{
-				sum_outputs += coef;
+				nbr_scalar_outputs += coef;
 				count_outputs++;
 			}
 		}
 	}
-	double mean_output = sum_outputs / count_outputs;
+	double mean_output = nbr_scalar_outputs / count_outputs;
 	double sstot = 0;
 	for (const auto& batch : outputs)
 		for (const auto& sample : batch)
 			for (const auto& coef : sample)
 				sstot += pow(coef - mean_output, 2);
 	auto loss_activation = LossFactory::create(loss_functions);
-	_loss = loss_functions;
-	_hidden_activation = layer_functions;
-	_output_activation = output_functions;
+	_loss_function = loss_functions;
+	_layer_function = layer_functions;
+	_output_function = output_functions;
 	valid_lists(inputs, outputs, nbr_inputs(), nbr_outputs());
-	std::map<std::string, std::vector<double>> track_training;
-	double ssres = 0;
+	model_measures_type track_training;
 	for (size_t i = 0 ; i < epochs ; i++)
 	{
-		double loss_index = 0;
-		for (size_t j = 0 ; j < inputs.size() ; j++)
-		{
-			std::vector<Matrix<double>> dW(nbr_hidden_layers() + 1);
-			std::vector<Matrix<double>> dZ(nbr_hidden_layers() + 1);
-			for (size_t k = 0 ; k < inputs[j].size() ; k++)
-			{
-				Vector<double> prediction = feed_forward(inputs[j][k], layer_functions, output_functions);
-				loss_index += loss_activation->activate(prediction, outputs[j][k]);
-				for (size_t l = 0 ; l < prediction.dimension() ; l++)
-					ssres += pow(prediction[l] - outputs[j][k][l], 2);
-				back_propagation(dW, dZ, loss_functions, layer_functions, output_functions, outputs[j][k]);
-			}
-			track_training["loss"].push_back(loss_index / inputs[j].size());
-			update_weights_bias(dW, dZ, inputs[j].size());
-		}
-		double r2 = 1.0 - ssres / sstot;
-		track_training["r2"].push_back(r2);
-		ssres = 0;
+		process(inputs, outputs, sstot, track_training, i, true);
 	}
 	return track_training;
 }
@@ -281,7 +289,7 @@ std::vector<std::vector<std::vector<double>>>	ARNetwork::batching(const std::vec
 	size_t groups = batch > list.size() ? 1 : (size_t)(list.size() / batch);
 	if (batch < list.size())
 		groups += list.size() % batch == 0 ? 0 : 1;
-	std::vector<std::vector<std::vector<double>>> result(groups);
+	batch_type result(groups);
 	size_t index = 0;
 	for (size_t i = 0 ; i < list.size() ; i++)
 	{

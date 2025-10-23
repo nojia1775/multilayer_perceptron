@@ -179,7 +179,7 @@ void	ARNetwork::update_weights_bias(const std::vector<Matrix<double>>& dW, const
 	}
 }
 
-static void	valid_lists(const std::vector<std::vector<std::vector<double>>>& inputs, const std::vector<std::vector<std::vector<double>>>& outputs, const size_t& nbr_inputs, const size_t& nbr_outputs)
+static void	valid_lists(const std::vector<std::vector<std::vector<double>>>& inputs, const std::vector<std::vector<std::vector<double>>>& outputs, const size_t& size_inputs, const size_t& size_outputs)
 {
 	if (inputs.size() != outputs.size())
 		throw Error("Error: the number of batch of inputs and outputs must be the same");
@@ -189,10 +189,10 @@ static void	valid_lists(const std::vector<std::vector<std::vector<double>>>& inp
 			throw Error("Error: batch of inputs and outputs have different size");
 		for (size_t j = 0 ; j < inputs[i].size() ; j++)
 		{
-			if (inputs[i][j].size() != nbr_inputs)
-				throw Error("Error: example " + j + std::string(" must have " + nbr_inputs + std::string(" inputs")));
-			if (outputs[i][j].size() != nbr_outputs)
-				throw Error("Error: example " + j + std::string(" must have " + nbr_inputs + std::string(" outputs")));
+			if (inputs[i][j].size() != size_inputs)
+				throw Error("Error: example " + j + std::string(" must have " + size_inputs + std::string(" inputs")));
+			if (outputs[i][j].size() != size_outputs)
+				throw Error("Error: example " + j + std::string(" must have " + size_inputs + std::string(" outputs")));
 		}
 	}
 }
@@ -218,7 +218,8 @@ void	ARNetwork::process(const batch_type& inputs, const batch_type& outputs, con
 			if (back)
 				back_propagation(dW, dZ, _loss_function, _layer_function, _output_function, outputs[j][k]);
 		}
-		update_weights_bias(dW, dZ, inputs[j].size());
+		if (back)
+			update_weights_bias(dW, dZ, inputs[j].size());
 	}
 	double r2 = 1.0 - ssres / sstot;
 	track_training[epoch] = {loss_index / nbr_vectorial_inputs, r2};
@@ -234,7 +235,7 @@ void	ARNetwork::process(const batch_type& inputs, const batch_type& outputs, con
  * @param outputs batches of outputs we want to reach
  * @param epochs number of epoch 
  *
- * @return map which contains a loss vector and et r2 vector to evaluate the training of the neural network
+ * @return map which contains a std::pair containing the loss and r2 for each epoch
  */
 std::map<size_t, std::pair<double, double>>	ARNetwork::train(const std::string& loss_functions, const std::string& layer_functions, const std::string& output_functions, const batch_type& inputs, const batch_type& outputs, const size_t& epochs)
 {
@@ -265,7 +266,7 @@ std::map<size_t, std::pair<double, double>>	ARNetwork::train(const std::string& 
 	_loss_function = loss_functions;
 	_layer_function = layer_functions;
 	_output_function = output_functions;
-	valid_lists(inputs, outputs, nbr_inputs(), nbr_outputs());
+	valid_lists(inputs, outputs, size_inputs(), size_outputs());
 	model_measures_type track_training;
 	for (size_t i = 0 ; i < epochs ; i++)
 	{
@@ -331,7 +332,7 @@ void	ARNetwork::randomize_bias(const double& min, const double& max)
 		for (size_t j = 0 ; j < nbr_hidden_neurals(i) ; j++)
 			_bias[i][j] = random_double(min, max);
 	}
-	for (size_t j = 0 ; j < nbr_outputs() ; j++)
+	for (size_t j = 0 ; j < size_outputs() ; j++)
 		_bias[i][j] = random_double(min, max);
 }
 

@@ -51,12 +51,12 @@ class	ARNetwork
 							throw Error("Error: index out of range"); else return _outputs[index]; }
 		void					get_json(const std::string& file_name) const;
 
-		size_t					nbr_inputs(void) const { return _inputs.dimension(); }
+		size_t					size_inputs(void) const { return _inputs.dimension(); }
 		size_t					nbr_hidden_layers(void) const { return _weights.size() - 1; }
 		size_t					nbr_hidden_neurals(const size_t& layer) const { if (layer > nbr_hidden_layers() - 1)
 							throw Error("Error: index out of range"); else return _weights[layer].getNbrLines(); }
 		size_t					nbr_bias(void) const { return _bias.size(); }
-		size_t					nbr_outputs(void) const { return _outputs.dimension(); }
+		size_t					size_outputs(void) const { return _outputs.dimension(); }
 
 		void					set_inputs(const Vector<double>& inputs) { _inputs = inputs; }
 		void					set_weights(std::vector<Matrix<double>>& weights) { _weights = weights; }

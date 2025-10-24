@@ -1,13 +1,13 @@
 #include "../include/Functions.hpp"
 
-Vector<double>	SoftMax::activate_vector(const Vector<double>& x) const
+Vector<double>	SoftMax::activate_vector(const Vector<double>& vector) const
 {
-	Vector<double> output(x.dimension());
-	double maxVal = *std::max_element(x.getStdVector().begin(), x.getStdVector().end());
+	Vector<double> output(vector.dimension());
+	double maxVal = *std::max_element(vector.getStdVector().begin(), vector.getStdVector().end());
 	double sumExp = 0.0;
-	for (size_t i = 0; i < x.dimension(); ++i)
+	for (size_t i = 0; i < vector.dimension(); ++i)
 	{
-		output[i] = std::exp(x[i] - maxVal);
+		output[i] = std::exp(vector[i] - maxVal);
 		sumExp += output[i];
 	}
 	for (size_t i = 0; i < output.dimension(); ++i)
@@ -15,24 +15,16 @@ Vector<double>	SoftMax::activate_vector(const Vector<double>& x) const
 	return output;
 }
 
-Matrix<double>	SoftMax::derive_vector(const Vector<double>& x) const
+Matrix<double> SoftMax::derive_vector(const Vector<double>& vector) const
 {
-	Vector<double> s = activate_vector(x);
-    	size_t n = s.dimension();
-    	Matrix<double> jacobian(n, n);
-
-    	for (size_t i = 0; i < n; ++i)
-    	{
-    	    for (size_t j = 0; j < n; ++j)
-    	    {
-    	        if (i == j)
-    	            jacobian[i][j] = s[i] * (1.0 - s[j]);
-    	        else
-    	            jacobian[i][j] = -s[i] * s[j];
-    	    }
-    	}
-    	return jacobian;
+	Vector<double> s = activate_vector(vector);
+	size_t n = s.dimension();
+	Matrix<double> derivative(n, 1);	
+	for (size_t i = 0; i < n; ++i)
+	    derivative[i][0] = s[i] * (1.0 - s[i]);
+	return derivative;
 }
+
 
 double	MSE::activate(const Vector<double>& a, const Vector<double>& b) const
 {

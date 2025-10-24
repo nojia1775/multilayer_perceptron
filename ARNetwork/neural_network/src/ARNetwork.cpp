@@ -144,7 +144,7 @@ void	ARNetwork::back_propagation(std::vector<Matrix<double>>& dW, std::vector<Ma
 	Matrix<double> dA(loss_activation->derive(_outputs, y));
 	for (int l = nbr_hidden_layers() ; l >= 0 ; l--)
 	{
-		Vector<double> tmp(_z[l].dimension());
+		Matrix<double> tmp(_z[l].dimension(), 1);
 		try
 		{
 			if (l == (int)nbr_hidden_layers())
@@ -154,12 +154,12 @@ void	ARNetwork::back_propagation(std::vector<Matrix<double>>& dW, std::vector<Ma
 		}
 		catch (...)
 		{
-			for (size_t i = 0 ; i < tmp.dimension() ; i++)
+			for (size_t i = 0 ; i < tmp.getNbrLines() ; i++)
 			{
 				if (l == (int)nbr_hidden_layers())
-					tmp[i] = output_activation->derive_scalar(tmp[i]);
+					tmp[i][0] = output_activation->derive_scalar(tmp[i][0]);
 				else
-					tmp[i] = layer_activation->derive_scalar(tmp[i]);
+					tmp[i][0] = layer_activation->derive_scalar(tmp[i][0]);
 			}
 		}
 		Matrix<double> z = dA.hadamard(tmp);
@@ -168,7 +168,6 @@ void	ARNetwork::back_propagation(std::vector<Matrix<double>>& dW, std::vector<Ma
 		dW[l] = dW[l] + w;
 		dA = _weights[l].transpose() * z;
 	}
-	std::cout << "ici\n";
 }
 
 void	ARNetwork::update_weights_bias(const std::vector<Matrix<double>>& dW, const std::vector<Matrix<double>>& dZ, const size_t& batch)

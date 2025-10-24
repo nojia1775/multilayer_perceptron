@@ -58,8 +58,8 @@ class	Identity : public IActivation
 class	SoftMax : public IActivation
 {
 	std::string	name(void) const override { return "softmax"; }
-	Vector<double>	activate_vector(const Vector<double>& x) const override;
-	Matrix<double>	derive_vector(const Vector<double>& x) const override;
+	Vector<double>	activate_vector(const Vector<double>& vector) const override;
+	Matrix<double>	derive_vector(const Vector<double>& vector) const override;
 };
 
 class	ILoss

@@ -23,7 +23,7 @@ static std::vector<size_t>	get_network(const std::string& arg)
 static ARNetwork	parse_args(int argc, char **argv, std::string& layer_function, int& epoch, int& batch)
 {
 	if (argc == 1)
-		throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_activation <layer_activation> --batch <batch>]");
+		throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_function <layer_function> --batch <batch>]");
 	double learning_rate = 0.1;
 	std::vector<size_t> network;
 	for (size_t i = 1 ; (int)i < argc && argv[i] ; i += 2)
@@ -31,7 +31,7 @@ static ARNetwork	parse_args(int argc, char **argv, std::string& layer_function, 
 		if (std::string(argv[i]) == "--epoch")
 		{
 			if (!argv[i + 1])
-				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_activation <layer_activation> --batch <batch>]");
+				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_function <layer_function> --batch <batch>]");
 			int value;
 			try { value = std::stoi(argv[i + 1]); }
 			catch (...) { throw Error("Error: epoch must be a non null positive integer"); }
@@ -42,7 +42,7 @@ static ARNetwork	parse_args(int argc, char **argv, std::string& layer_function, 
 		else if (std::string(argv[i]) == "--learning_rate")
 		{
 			if (!argv[i + 1])
-				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_activation <layer_activation> --batch <batch>]");
+				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_function <layer_function> --batch <batch>]");
 			double value;
 			try { value = std::stod(argv[i + 1]); }
 			catch (...) { throw Error("Error: learning rate must be a non null positive double"); }
@@ -53,13 +53,13 @@ static ARNetwork	parse_args(int argc, char **argv, std::string& layer_function, 
 		else if (std::string(argv[i]) == "--layer_function")
 		{
 			if (!argv[i + 1])
-				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_activation <layer_activation> --batch <batch>]");
+				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_function <layer_function> --batch <batch>]");
 			layer_function = argv[i + 1];
 		}
 		else if (std::string(argv[i]) == "--batch")
 		{
 			if (!argv[i + 1])
-				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_activation <layer_activation> --batch <batch>]");
+				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_function <layer_function> --batch <batch>]");
 			double value;
 			try { value = std::stoi(argv[i + 1]); }
 			catch (...) { throw Error("Error: batch must be a non null positive integer"); }
@@ -70,7 +70,7 @@ static ARNetwork	parse_args(int argc, char **argv, std::string& layer_function, 
 		else if (std::string(argv[i]) == "--layer")
 		{
 			if (!argv[i + 1])
-				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_activation <layer_activation> --batch <batch>]");
+				throw Error("Error: ./train --layer '<layers>' [--epoch <epoch> --learning_rate <learning_rate> --layer_function <layer_function> --batch <batch>]");
 			network = get_network(argv[i + 1]);
 		}
 		else
@@ -159,6 +159,8 @@ int	main(int argc, char **argv)
 		std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> validation_datas = extract_datas("validation.csv");
 		std::pair<std::map<size_t, std::pair<double, double>>, std::map<size_t, std::pair<double, double>>> tracking = arn.train("bce", layer_function, "softmax", {ARNetwork::batching(train_datas.first, batch), ARNetwork::batching(validation_datas.first, batch)}, {ARNetwork::batching(train_datas.second, batch), ARNetwork::batching(validation_datas.second, batch)}, epoch);
 		arn.get_json("model.json");
+		for (const auto& track : tracking.first)
+			std::cout << track.first << " loss = " << track.second.first << " r2 = " << track.second.second << std::endl;
 	}
 	catch (const std::exception& e) { std::cerr << e.what() << std::endl; }
 	return 0;

@@ -53,7 +53,7 @@ class	ARNetwork
 
 		size_t					size_inputs(void) const { return _inputs.dimension(); }
 		size_t					nbr_hidden_layers(void) const { return _weights.size() - 1; }
-		size_t					nbr_hidden_neurals(const size_t& layer) const { if (layer > nbr_hidden_layers() - 1)
+		size_t					nbr_hidden_neurals(const size_t& layer) const { if (layer > nbr_hidden_layers())
 							throw Error("Error: index out of range"); else return _weights[layer].getNbrLines(); }
 		size_t					nbr_bias(void) const { return _bias.size(); }
 		size_t					size_outputs(void) const { return _outputs.dimension(); }

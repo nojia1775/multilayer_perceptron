@@ -155,6 +155,12 @@ int	main(int argc, char **argv)
 		int batch = 1;
 		std::string layer_function = "sigmoid";
 		ARNetwork arn = parse_args(argc, argv, layer_function, epoch, batch);
+		arn.randomize_bias(0, -sqrt(6 / 43), sqrt(6 / 43));
+		arn.randomize_weights(0, -sqrt(6 / 43), sqrt(6 / 43));
+		arn.randomize_bias(1, -sqrt(6 / 24), sqrt(6 / 24));
+		arn.randomize_weights(1, -sqrt(6 / 24), sqrt(6 / 24));
+		arn.randomize_bias(2, -sqrt(6 / 10), sqrt(6 / 10));
+		arn.randomize_weights(2, -sqrt(6 / 10), sqrt(6 / 10));
 		std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> train_datas = extract_datas("training.csv");
 		std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> validation_datas = extract_datas("validation.csv");
 		std::pair<std::map<size_t, std::pair<double, double>>, std::map<size_t, std::pair<double, double>>> tracking = arn.train("bce", layer_function, "softmax", {ARNetwork::batching(train_datas.first, batch), ARNetwork::batching(validation_datas.first, batch)}, {ARNetwork::batching(train_datas.second, batch), ARNetwork::batching(validation_datas.second, batch)}, epoch);

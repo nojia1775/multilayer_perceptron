@@ -197,7 +197,7 @@ static void	valid_lists(const std::vector<std::vector<std::vector<double>>>& inp
 	}
 }
 
-void	ARNetwork::process(const batch_type& inputs, const batch_type& outputs, const double& sstot, model_measures_type& track_training, const size_t& epoch, const bool& back)
+void	ARNetwork::process(const batch_type& inputs, const batch_type& outputs, const double& sstot, std::map<size_t, std::pair<double, double>>& track_training, const size_t& epoch, const bool& back)
 {
 	double nbr_vectorial_inputs = 0;
 	for (const auto& batch : inputs)
@@ -225,24 +225,8 @@ void	ARNetwork::process(const batch_type& inputs, const batch_type& outputs, con
 	track_training[epoch] = {loss_index / nbr_vectorial_inputs, r2};
 }
 
-/**
- * @brief Train the neural network based on a data set
- * 
- * @param loss_functions name of the loss function
- * @param layer_functions name of the activation function used in the hidden layers
- * @param output_functions name of the activation function used in the output layer
- * @param inputs batches of inputs
- * @param outputs batches of outputs we want to reach
- * @param epochs number of epoch 
- *
- * @return map which contains a std::pair containing the loss and r2 for each epoch
- */
-std::map<size_t, std::pair<double, double>>	ARNetwork::train(const std::string& loss_functions, const std::string& layer_functions, const std::string& output_functions, const batch_type& inputs, const batch_type& outputs, const size_t& epochs)
+static double	compute_sstot(const std::vector<std::vector<std::vector<double>>>& outputs)
 {
-	if (inputs.empty())
-		throw Error("Error: there is no input");
-	if (outputs.empty())
-		throw Error("Error: there is no expected output");
 	double count_outputs = 0;
 	double nbr_scalar_outputs = 0;
 	for (const auto& batch : outputs)
@@ -262,15 +246,38 @@ std::map<size_t, std::pair<double, double>>	ARNetwork::train(const std::string& 
 		for (const auto& sample : batch)
 			for (const auto& coef : sample)
 				sstot += pow(coef - mean_output, 2);
+	return sstot;
+}
+
+/**
+ * @brief Train the neural network based on a data set
+ * 
+ * @param loss_functions name of the loss function
+ * @param layer_functions name of the activation function used in the hidden layers
+ * @param output_functions name of the activation function used in the output layer
+ * @param inputs batches of inputs
+ * @param outputs batches of outputs we want to reach
+ * @param epochs number of epoch 
+ *
+ * @return A pair of map which contains a pair containing the loss and r2 for each epoch
+ */
+std::pair<std::map<size_t, std::pair<double, double>>, std::map<size_t, std::pair<double, double>>>	ARNetwork::train(const std::string& loss_functions, const std::string& layer_functions, const std::string& output_functions, const std::pair<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<std::vector<double>>>>& inputs, const std::pair<std::vector<std::vector<std::vector<double>>>, std::vector<std::vector<std::vector<double>>>>& outputs, const size_t& epochs)
+{
+	if (inputs.first.empty() || inputs.second.empty())
+		throw Error("Error: train or validation inputs are missing");
+	if (outputs.first.empty() || outputs.second.empty())
+		throw Error("Error: train or validation inputs are missing");
 	auto loss_activation = LossFactory::create(loss_functions);
 	_loss_function = loss_functions;
 	_layer_function = layer_functions;
 	_output_function = output_functions;
-	valid_lists(inputs, outputs, size_inputs(), size_outputs());
+	valid_lists(inputs.first, outputs.first, size_inputs(), size_outputs());
+	valid_lists(inputs.second, outputs.second, size_inputs(), size_outputs());
 	model_measures_type track_training;
 	for (size_t i = 0 ; i < epochs ; i++)
 	{
-		process(inputs, outputs, sstot, track_training, i, true);
+		process(inputs.first, outputs.first, compute_sstot(outputs.first), track_training.first, i, true);
+		process(inputs.second, outputs.second, compute_sstot(outputs.second), track_training.second, i, false);
 	}
 	return track_training;
 }

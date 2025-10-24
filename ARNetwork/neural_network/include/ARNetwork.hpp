@@ -12,7 +12,7 @@ class	ARNetwork
 {
 	private:
 		using batch_type = std::vector<std::vector<std::vector<double>>>;
-		using model_measures_type = std::map<size_t, std::pair<double, double>>;
+		using model_measures_type = std::pair<std::map<size_t, std::pair<double, double>>, std::map<size_t, std::pair<double, double>>>;
 
 		Vector<double>				_inputs;
 		Vector<double>				_outputs;
@@ -26,7 +26,7 @@ class	ARNetwork
 		std::string				_loss_function;
 
 		void					process(const batch_type& inputs, const batch_type& outputs,
-							const double& sstot, model_measures_type& track_training, const size_t& epoch, const bool& back);
+							const double& sstot, std::map<size_t, std::pair<double, double>>& track_training, const size_t& epoch, const bool& back);
 	public:
 							ARNetwork(const std::vector<size_t>& network);
 							ARNetwork(const std::string& file_name);
@@ -73,7 +73,7 @@ class	ARNetwork
 		void					back_propagation(std::vector<Matrix<double>>& dW,
 							std::vector<Matrix<double>>& dZ, const std::string& loss_functions,const std::string& layer_functions,const std::string& output_functions, const Vector<double>& y);
 		model_measures_type			train(const std::string& loss_functions, const std::string& layer_functions,
-							const std::string& output_functions, const batch_type& inputs, const batch_type& outputs, const size_t& epochs);
+							const std::string& output_functions, const std::pair<batch_type, batch_type>& inputs, const std::pair<batch_type, batch_type>& outputs, const size_t& epochs);
 		void					update_weights_bias(const std::vector<Matrix<double>>& dW,
 							const std::vector<Matrix<double>>& dZ, const size_t& batch);
 		static batch_type			batching(const std::vector<std::vector<double>>& list, const size_t& batch);

@@ -86,8 +86,8 @@ int	main(int argc, char **argv)
 		int epoch = 1000;
 		int batch = 1;
 		std::string layer_function = "sigmoid";
-		std::pair<std::vector<std::vector<double>>, std::vector<std::vector<double>>> data;
 		ARNetwork arn = parse_args(argc, argv, layer_function, epoch, batch);
+		arn.get_json("model.json");
 	}
 	catch (const std::exception& e) { std::cerr << e.what() << std::endl; }
 	return 0;

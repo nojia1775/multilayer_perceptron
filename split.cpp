@@ -14,6 +14,35 @@ static void	read_line(const std::string& line, std::vector<double>& data)
 	}
 }
 
+static void	valid_line(const std::string& line, const size_t& comma, const size_t& dot, const std::string& file, const size_t& index)
+{
+	size_t count_dot = 0;
+	size_t count_comma = 0;
+	for (size_t i = 0 ; i < line.size() ; i++)
+	{
+		if (!isdigit(line[i]) && line[i] != ',' && line[i] != '.' && line[i] != 'M' && line[i] != 'B')
+			throw Error("Error: " + file + std::string(" is corrupted: line " + index) + std::string(" column " + i));
+		if (line[i] == ',')
+		{
+			count_comma++;
+			if (i == 0)
+				throw Error("Error: " + file + std::string(" is corrupted: line " + index) + std::string(" column " + i));
+			if ((!isdigit(line[i - 1]) && line[i - 1] != 'M' && line[i - 1] != 'B') || (!isdigit(line[i + 1]) && line[i + 1] != 'M' && line[i + 1] != 'B'))
+				throw Error("Error: " + file + std::string(" is corrupted: line " + index) + std::string(" column " + i));
+		}
+		if (line[i] == '.')
+		{
+			count_dot++;
+			if (i == 0)
+				throw Error("Error: " + file + std::string(" is corrupted: line " + index) + std::string(" column " + i));
+			if (!isdigit(line[i - 1]) || !isdigit(line[i + 1]))
+				throw Error("Error: " + file + std::string(" is corrupted: line " + index) + std::string(" column " + i));
+		}
+	}
+	if (count_comma != comma || count_dot > dot)
+		throw Error("Error: " + file + std::string(" is corrupted: wrong number of comma or dot"));
+}
+
 static std::vector<std::vector<double>>	read_file(const std::string& dataset)
 {
 	std::ifstream file(dataset);
@@ -21,8 +50,10 @@ static std::vector<std::vector<double>>	read_file(const std::string& dataset)
 		throw Error("Error: couldn't open " + dataset);
 	std::vector<std::vector<double>> data;
 	std::string line;
+	size_t count_line = 0;
 	while (getline(file, line))
 	{
+		valid_line(line, 31, 30, dataset, count_line++);
 		std::vector<double> dataline;
 		read_line(line, dataline);
 		data.push_back(dataline);

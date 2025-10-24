@@ -111,7 +111,7 @@ Vector<double>	ARNetwork::feed_forward(const Vector<double>& inputs, const std::
 		{
 			for (size_t j = 0 ; j < neurals.getNbrLines() ; j++)
 			{
-				if (i == 0)
+				if (i == nbr_hidden_layers())
 					neurals[j][0] = output_activation->activate_scalar(neurals[j][0]);
 				else
 					neurals[j][0] = layer_activation->activate_scalar(neurals[j][0]);
@@ -168,6 +168,7 @@ void	ARNetwork::back_propagation(std::vector<Matrix<double>>& dW, std::vector<Ma
 		dW[l] = dW[l] + w;
 		dA = _weights[l].transpose() * z;
 	}
+	std::cout << "ici\n";
 }
 
 void	ARNetwork::update_weights_bias(const std::vector<Matrix<double>>& dW, const std::vector<Matrix<double>>& dZ, const size_t& batch)
